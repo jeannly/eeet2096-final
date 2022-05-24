@@ -1,0 +1,26 @@
+If you make any changes, once you're done for a session add it below the line.
+
+-----------------------------------------------------------------------------
+15th May - Jean
+Updated documentation and diagram files to match new assignment requirements
+Created initialisation files
+	Files that were changed were:
+	- documentation folder
+		- updated everything to match new requirements
+	- peripherals.c/.h
+		- interfaces (structs) and drivers for UART, Timers
+	- lightSystem.c/.h
+		- interfaces for light, light switch, and light sensor
+	- acSystem.c/.h
+		- interfaces for heater, cooler, fan
+	- main.c
+		- initialisation for all of the above
+
+11th May - Jean
+Added documentation and diagram files
+	Files that were changed were:
+	- documentation folder
+		- diagrams that describe general program flow, plus details of which pins to use
+		- program flow for interrupts - these can occur at any time
+			during the program flow
+		- UART comms requirement describes the protocol for talking via UART

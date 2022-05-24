@@ -11,8 +11,7 @@
 #include "core_cm4.h"
 #include "gpioControl.h"
 
-#include "acSystem.h"
-#include "lightSystem.h"
+#include "homeManagement.h"
 #include "peripherals.h"
 
 #pragma diag_warning 1 // Disable warning:  #1-D: last line of file ends without a newline
@@ -113,28 +112,28 @@ Timer monitoring_timer = {
     .is_running = true,
     .time_in_ms = 1000,
     .in_one_pulse_mode = false,
-    .clock_speed = APB1_ClkSpeed,
+    .clock_speed = APB1_ClkSpeed*2, // The timers operate at 2x bus speed for some reason...
     .timer_component = TIM6};
 Timer rising_edge_timer = {
     .is_running = true,
     .time_in_ms = RISING_EDGE_TIMER_PERIOD,
     .in_one_pulse_mode = false,
-    .clock_speed = APB1_ClkSpeed,
+    .clock_speed = APB1_ClkSpeed*2,
     .timer_component = TIM7};
 Timer uart_priority_timer = {
     .is_running = false,
     .time_in_ms = 1000,
     .in_one_pulse_mode = true,
-    .clock_speed = APB2_ClkSpeed,
+    .clock_speed = APB2_ClkSpeed*2,
     .timer_component = TIM10};
 
 /****************** HOME MANAGEMENT SYSTEM COMPONENTS ******************/
-// Unfortunately we don't have constructors for these.
-// Leave uninitialised until we've determined member data.
-Light light = {
+// Unfortunately we don't have constructors for these, so here we go.
+Component light = {
     .is_on = false,
     .gpio_config = &light_config};
 LightSwitch light_switch = {
+    .is_disabled = false,
     .was_toggled = false,
     .was_pressed = false,
     .is_pressed = false,
@@ -144,19 +143,21 @@ LightSensor light_sensor = {
     .is_active = false,
     .gpio_config = &light_sensor_config};
 
-Heater heater = {
+Component heater = {
     .is_on = false,
     .gpio_config = &heater_config};
-Cooler cooler = {
+Component cooler = {
     .is_on = false,
     .gpio_config = &cooler_config};
-Fan fan = {
+Component fan = {
     .is_on = false,
     .gpio_config = &fan_config};
 FanSwitch fan_switch = {
     .was_toggled = false,
     .was_pressed = false,
     .is_pressed = false,
+    .override_active = false,
+    .override_time = 0,
     .has_been_held_for = 0,
     .gpio_config = &fan_switch_config};
 Thermometer thermometer = {
@@ -209,8 +210,7 @@ int main(void)
   initTimer(&monitoring_timer);
   initTimer(&rising_edge_timer);
   initTimer(&uart_priority_timer);
-  
-	
+  initADC3();
 	
   /***************************************************/
   /*              INITIALISATION END                 */
@@ -221,26 +221,46 @@ int main(void)
   /***************************************************/
   while (1)
   {
-    updateLightSwitch(&light_switch);
-    if (light_switch.was_toggled) {
-      // For now, just toggle the light on and off.
-      if (light.is_on) {
-        turnOffLight(&light);
-      } else {
-        turnOnLight(&light);
-      }
-      light_switch.was_toggled = false;
-    }
-    // Same as above, except it's a fan.
+    // Question for Glenn: should we call all update functions at once?
+    //  Or call them "just in time" - right before the I/O logic is handled?
     updateFanSwitch(&fan_switch);
+    updateLightSensor(&light_sensor);
+    updateLightSwitch(&light_switch);
+
+    /* When the fan switch is toggled, we want to override the AC system logic
+        by turning the fan OFF for 15s */
     if (fan_switch.was_toggled) {
-      if (fan.is_on) {
-        turnOffFan(&fan);
-      } else {
-        turnOnFan(&fan);
-      }
-      fan_switch.was_toggled = false;
+      turnOff(&fan);
+      // Start (or reset) the override timer (controlled by TIM6)
+      setOverride(&fan_switch);
     }
+    /* Task C: AC logic */
+    // TODO: While the ADC doesn't work, test by setting temperature manually.
+    // Once the ADC is working, just call updateThermometer(&thermometer) on a new line below.
+    if (thermometer.celcius < 22) {
+      turnOn(&heater);
+      if (!fan_switch.override_active) { turnOn(&fan); }
+      turnOff(&cooler);
+    } else if (thermometer.celcius > 24) {
+      turnOn(&cooler);
+      if (!fan_switch.override_active) { turnOn(&fan); }
+      turnOff(&heater);
+    } else {
+      turnOff(&heater);
+      turnOff(&cooler);
+      turnOff(&fan);
+    }
+
+    //Task D: light switch only works if the sensor isn't active
+    if (light_sensor.is_active) {
+      light_switch.is_disabled = true;
+    } else {
+      light_switch.is_disabled = false;
+    }
+    if (light_switch.was_toggled) {
+      toggle(&light);
+    }
+
   }
 }
 
@@ -248,12 +268,17 @@ int main(void)
 /* TIM6_DAC_IRQHandler: TIM6 Global Interrupt
     Occurs every 1s. Handles:
     - monitoring (sending info to the UART)
-    - 15s timer for the fan switch
-    - 15s timer for the AC system
 */
 void TIM6_DAC_IRQHandler(void) {
   // Clear update interrupt
   TIM6->SR &= ~(TIM_SR_UIF);
+  /* Send out the following variables:
+  thermometer.celcius
+  light.is_on
+  fan.is_on
+  heater.is_on
+  cooler.is_on
+  */
 
   // Flush pipeline (allow last instruction to go through, if it was interrupted midway)
   __asm("isb");
@@ -262,6 +287,7 @@ void TIM6_DAC_IRQHandler(void) {
 /* TIM7_IRQHandler: TIM7 Global Interrupt
     Occurs regularly, every (RISING_EDGE_TIMER_PERIOD)ms. Handles:
     - updating how long a switch has been held for, if it is pressed
+    - 15s for the fan switch override
 */
 void TIM7_IRQHandler(void) {
   // Clear update interrupt
@@ -273,7 +299,9 @@ void TIM7_IRQHandler(void) {
   if (light_switch.is_pressed) {
     light_switch.has_been_held_for += RISING_EDGE_TIMER_PERIOD;
   }
-
+  if (fan_switch.override_active) {
+    fan_switch.override_time += RISING_EDGE_TIMER_PERIOD;
+  }
   // Flush pipeline (allow last instruction to go through, if it was interrupted midway)
   __asm("isb");
 }

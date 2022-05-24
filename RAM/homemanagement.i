@@ -1,5 +1,5 @@
-#line 1 "src\\acSystem.c"
-#line 1 ".\\inc\\acSystem.h"
+#line 1 "src\\homeManagement.c"
+#line 1 ".\\inc\\homeManagement.h"
 
 
 
@@ -259,7 +259,7 @@ typedef unsigned     long long uintmax_t;
 
 
  
-#line 5 ".\\inc\\acSystem.h"
+#line 5 ".\\inc\\homeManagement.h"
 #line 1 "C:\\Keil_v5\\ARM\\ARMCC\\Bin\\..\\include\\stdbool.h"
  
 
@@ -278,7 +278,7 @@ typedef unsigned     long long uintmax_t;
 
 
 
-#line 6 ".\\inc\\acSystem.h"
+#line 6 ".\\inc\\homeManagement.h"
 #line 1 ".\\inc\\gpioControl.h"
 
 
@@ -7868,28 +7868,34 @@ typedef struct
 		void gpio_resetGPIO(GPIO_TypeDef *, GPIOPin);							
 			
 
-#line 7 ".\\inc\\acSystem.h"
+#line 7 ".\\inc\\homeManagement.h"
 
-
-typedef struct Heater {
+ 
+typedef struct Component {
     _Bool is_on;
     GPIO_Config* gpio_config;
-} Heater;
+} Component;
 
-typedef struct Cooler {
-    _Bool is_on;
+typedef struct LightSwitch {
+    _Bool is_disabled;
+    _Bool was_toggled; 
+    _Bool was_pressed;
+    _Bool is_pressed;
+    volatile uint16_t has_been_held_for;
     GPIO_Config* gpio_config;
-} Cooler;
+} LightSwitch;
 
-typedef struct Fan {
-    _Bool is_on;
+typedef struct LightSensor {
+    _Bool is_active;
     GPIO_Config* gpio_config;
-} Fan;
+} LightSensor;
 
 typedef struct FanSwitch {
     _Bool was_toggled; 
     _Bool was_pressed;
     _Bool is_pressed;
+    _Bool override_active;
+    volatile uint16_t override_time; 
     volatile uint16_t has_been_held_for;
     GPIO_Config* gpio_config;
 } FanSwitch;
@@ -7901,22 +7907,88 @@ typedef struct Thermometer {
 } Thermometer;
 
 void updateFanSwitch(FanSwitch*);
-void turnOnFan(Fan*);
-void turnOffFan(Fan*);
+void setOverride(FanSwitch*);
+void updateThermometer(Thermometer*);
+void updateLightSwitch(LightSwitch*);
+void updateLightSensor(LightSensor*);
+void toggle(Component*);
+void turnOn(Component*);
+void turnOff(Component*);
 
+#line 2 "src\\homeManagement.c"
 
+#line 4 "src\\homeManagement.c"
+#line 5 "src\\homeManagement.c"
+#line 6 "src\\homeManagement.c"
 
-#line 2 "src\\acSystem.c"
-
-#line 4 "src\\acSystem.c"
-#line 5 "src\\acSystem.c"
-#line 6 "src\\acSystem.c"
 
 
 
 
  
+void updateLightSwitch(LightSwitch* light_switch) {
+
+    if (light_switch->was_toggled) {
+        light_switch->was_toggled = 0;
+    }
+
+    if (light_switch->is_disabled) {
+        return;
+    }
+    uint8_t gpio_val;
+    gpio_val = gpio_getPinValue(light_switch->gpio_config->port, light_switch->gpio_config->pin);
+    if (gpio_val == 0) { 
+        light_switch->is_pressed = 1;
+    } else {
+        light_switch->is_pressed = 0;
+    }
+
+
+    if (light_switch->was_pressed && !light_switch->is_pressed) {
+        
+        if (light_switch->has_been_held_for >= 500) {
+            light_switch->was_toggled = 1;
+        }
+        light_switch->has_been_held_for = 0;
+    }
+
+    light_switch->was_pressed = light_switch->is_pressed;
+    return;
+}
+
+
+
+
+
+ 
+void updateLightSensor(LightSensor* sensor) {
+    uint8_t gpio_val;
+    gpio_val = gpio_getPinValue(sensor->gpio_config->port, sensor->gpio_config->pin);
+    if (gpio_val == 0) { 
+        sensor->is_active = 1;
+    } else {
+        sensor->is_active = 0;
+    }
+    return;
+}
+
+
+
+ 
 void updateFanSwitch(FanSwitch* fan_switch) {
+
+
+    if (fan_switch->override_active) {
+        if (fan_switch->override_time >= 15000) {
+            fan_switch->override_active = 0;
+            fan_switch->override_time = 0;
+        }
+    }
+
+    if (fan_switch->was_toggled) {
+        fan_switch->was_toggled = 0;
+    }
+
 
     uint8_t gpio_val;
     gpio_val = gpio_getPinValue(fan_switch->gpio_config->port, fan_switch->gpio_config->pin);
@@ -7927,9 +7999,11 @@ void updateFanSwitch(FanSwitch* fan_switch) {
     }
 
 
-    if (fan_switch->was_pressed && !fan_switch->is_pressed 
-        && fan_switch->has_been_held_for >= 500) {
-        fan_switch->was_toggled = 1;
+    if (fan_switch->was_pressed && !fan_switch->is_pressed) {
+        
+        if (fan_switch->has_been_held_for >= 500) {
+            fan_switch->was_toggled = 1;
+        }
         fan_switch->has_been_held_for = 0;
     }
 
@@ -7937,17 +8011,42 @@ void updateFanSwitch(FanSwitch* fan_switch) {
     return;
 }
 
-void turnOnFan(Fan* fan) {
-    
-    gpio_resetGPIO(fan->gpio_config->port, fan->gpio_config->pin);
-    fan->is_on = 1;
-    return;
-}
-void turnOffFan(Fan* fan) {
-    
-    gpio_setGPIO(fan->gpio_config->port, fan->gpio_config->pin);
-    fan->is_on = 0;
+void setOverride(FanSwitch* fan_switch) {
+    fan_switch->override_active = 1;
+    fan_switch->override_time = 0;
     return;
 }
 
 
+
+ 
+void updateThermometer(Thermometer* thermometer) {
+    ((ADC_TypeDef *) ((0x40000000U + 0x00010000U) + 0x2200U))->CR2 |= (0x1U << (30U));
+	while((((ADC_TypeDef *) ((0x40000000U + 0x00010000U) + 0x2200U))->SR & (0x1U << (1U))) == 0x00); 
+	thermometer->adc_val = (((ADC_TypeDef *) ((0x40000000U + 0x00010000U) + 0x2200U))->DR & 0x0000FFFF);
+    
+    
+	thermometer->celcius = ((((float)thermometer->adc_val / 4095) * 37) + 8);
+    return;
+}
+void toggle(Component* component) {
+    if (component->is_on) {
+        turnOff(component);
+        component->is_on = 0;
+    } else {
+        turnOn(component);
+        component->is_on = 1;
+    }
+}
+void turnOn(Component* component) {
+    
+    gpio_resetGPIO(component->gpio_config->port, component->gpio_config->pin);
+    component->is_on = 1;
+    return;
+}
+void turnOff(Component* component) {
+    
+    gpio_setGPIO(component->gpio_config->port, component->gpio_config->pin);
+    component->is_on = 0;
+    return;
+}

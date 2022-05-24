@@ -13,6 +13,5 @@
 .\ram\main.o: .\inc\CMSIS\core_cm4.h
 .\ram\main.o: .\inc\config.h
 .\ram\main.o: .\inc\gpioControl.h
-.\ram\main.o: .\inc\acSystem.h
-.\ram\main.o: .\inc\lightSystem.h
+.\ram\main.o: .\inc\homeManagement.h
 .\ram\main.o: .\inc\peripherals.h

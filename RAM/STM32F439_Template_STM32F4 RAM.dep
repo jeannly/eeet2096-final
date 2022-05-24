@@ -26,33 +26,7 @@ I (.\inc\CMSIS\core_cmFunc.h)(0x5D81BA6E)
 I (.\inc\CMSIS\core_cmSimd.h)(0x5D81BA6E)
 I (.\RTE\Device\STM32F439IITx\system_stm32f4xx.h)(0x5D81BA74)
 I (.\inc\gpioControl.h)(0x628C55CE)
-F (.\src\acSystem.c)(0x628C5FF1)(--c99 -c --cpu Cortex-M4.fp.sp -D__EVAL -D__MICROLIB -g -O0 --apcs=interwork -I .\src\CMSIS -I .\src\CMSIS\arm_math -I .\inc -I .\inc\CMSIS -I .\RTE\Device\STM32F439IITx -D__UVISION_VERSION="536" -D_RTE_ -DSTM32F439xx -D_RTE_ -DDAUGHTER_REV1 -DSTM32F439-o .\ram\acsystem.o --list_dir ".\\RAM\\" --list --omf_browse .\ram\acsystem.crf --depend .\ram\acsystem.d)
-I (.\inc\acSystem.h)(0x628C5C32)
-I (C:\Keil_v5\ARM\ARMCC\include\stdint.h)(0x6024F94E)
-I (C:\Keil_v5\ARM\ARMCC\include\stdbool.h)(0x6024F94C)
-I (.\inc\gpioControl.h)(0x628C55CE)
-I (.\inc\stm32f439xx.h)(0x5E37530A)
-I (.\inc\CMSIS\core_cm4.h)(0x5D81BA6E)
-I (.\inc\config.h)(0x5E3796BA)
-I (.\inc\CMSIS\core_cmInstr.h)(0x5D81BA6E)
-I (.\inc\CMSIS\cmsis_armcc.h)(0x5D81BA6E)
-I (.\inc\CMSIS\core_cmFunc.h)(0x5D81BA6E)
-I (.\inc\CMSIS\core_cmSimd.h)(0x5D81BA6E)
-I (.\RTE\Device\STM32F439IITx\system_stm32f4xx.h)(0x5D81BA74)
-F (.\src\lightSystem.c)(0x628C619C)(--c99 -c --cpu Cortex-M4.fp.sp -D__EVAL -D__MICROLIB -g -O0 --apcs=interwork -I .\src\CMSIS -I .\src\CMSIS\arm_math -I .\inc -I .\inc\CMSIS -I .\RTE\Device\STM32F439IITx -D__UVISION_VERSION="536" -D_RTE_ -DSTM32F439xx -D_RTE_ -DDAUGHTER_REV1 -DSTM32F439-o .\ram\lightsystem.o --list_dir ".\\RAM\\" --list --omf_browse .\ram\lightsystem.crf --depend .\ram\lightsystem.d)
-I (.\inc\lightSystem.h)(0x628C5C19)
-I (C:\Keil_v5\ARM\ARMCC\include\stdint.h)(0x6024F94E)
-I (C:\Keil_v5\ARM\ARMCC\include\stdbool.h)(0x6024F94C)
-I (.\inc\gpioControl.h)(0x628C55CE)
-I (.\inc\stm32f439xx.h)(0x5E37530A)
-I (.\inc\CMSIS\core_cm4.h)(0x5D81BA6E)
-I (.\inc\config.h)(0x5E3796BA)
-I (.\inc\CMSIS\core_cmInstr.h)(0x5D81BA6E)
-I (.\inc\CMSIS\cmsis_armcc.h)(0x5D81BA6E)
-I (.\inc\CMSIS\core_cmFunc.h)(0x5D81BA6E)
-I (.\inc\CMSIS\core_cmSimd.h)(0x5D81BA6E)
-I (.\RTE\Device\STM32F439IITx\system_stm32f4xx.h)(0x5D81BA74)
-F (.\src\main.c)(0x628C6268)(--c99 -c --cpu Cortex-M4.fp.sp -D__EVAL -D__MICROLIB -g -O0 --apcs=interwork -I .\src\CMSIS -I .\src\CMSIS\arm_math -I .\inc -I .\inc\CMSIS -I .\RTE\Device\STM32F439IITx -D__UVISION_VERSION="536" -D_RTE_ -DSTM32F439xx -D_RTE_ -DDAUGHTER_REV1 -DSTM32F439-o .\ram\main.o --list_dir ".\\RAM\\" --list --omf_browse .\ram\main.crf --depend .\ram\main.d)
+F (.\src\main.c)(0x628C85C6)(--c99 -c --cpu Cortex-M4.fp.sp -D__EVAL -D__MICROLIB -g -O0 --apcs=interwork -I .\src\CMSIS -I .\src\CMSIS\arm_math -I .\inc -I .\inc\CMSIS -I .\RTE\Device\STM32F439IITx -D__UVISION_VERSION="536" -D_RTE_ -DSTM32F439xx -D_RTE_ -DDAUGHTER_REV1 -DSTM32F439-o .\ram\main.o --list_dir ".\\RAM\\" --list --omf_browse .\ram\main.crf --depend .\ram\main.d)
 I (C:\Keil_v5\ARM\ARMCC\include\stdbool.h)(0x6024F94C)
 I (C:\Keil_v5\ARM\ARMCC\include\stdint.h)(0x6024F94E)
 I (.\inc\stm32f439xx.h)(0x5E37530A)
@@ -65,13 +39,25 @@ I (.\inc\CMSIS\core_cmSimd.h)(0x5D81BA6E)
 I (.\RTE\Device\STM32F439IITx\system_stm32f4xx.h)(0x5D81BA74)
 I (.\inc\boardSupport.h)(0x5E376AAA)
 I (.\inc\gpioControl.h)(0x628C55CE)
-I (.\inc\acSystem.h)(0x628C5C32)
-I (.\inc\lightSystem.h)(0x628C5C19)
-I (.\inc\peripherals.h)(0x628C4600)
-F (.\src\peripherals.c)(0x628C4600)(--c99 -c --cpu Cortex-M4.fp.sp -D__EVAL -D__MICROLIB -g -O0 --apcs=interwork -I .\src\CMSIS -I .\src\CMSIS\arm_math -I .\inc -I .\inc\CMSIS -I .\RTE\Device\STM32F439IITx -D__UVISION_VERSION="536" -D_RTE_ -DSTM32F439xx -D_RTE_ -DDAUGHTER_REV1 -DSTM32F439-o .\ram\peripherals.o --list_dir ".\\RAM\\" --list --omf_browse .\ram\peripherals.crf --depend .\ram\peripherals.d)
-I (.\inc\peripherals.h)(0x628C4600)
+I (.\inc\homeManagement.h)(0x628C82AF)
+I (.\inc\peripherals.h)(0x628C63F5)
+F (.\src\peripherals.c)(0x628C6404)(--c99 -c --cpu Cortex-M4.fp.sp -D__EVAL -D__MICROLIB -g -O0 --apcs=interwork -I .\src\CMSIS -I .\src\CMSIS\arm_math -I .\inc -I .\inc\CMSIS -I .\RTE\Device\STM32F439IITx -D__UVISION_VERSION="536" -D_RTE_ -DSTM32F439xx -D_RTE_ -DDAUGHTER_REV1 -DSTM32F439-o .\ram\peripherals.o --list_dir ".\\RAM\\" --list --omf_browse .\ram\peripherals.crf --depend .\ram\peripherals.d)
+I (.\inc\peripherals.h)(0x628C63F5)
 I (C:\Keil_v5\ARM\ARMCC\include\stdbool.h)(0x6024F94C)
 I (C:\Keil_v5\ARM\ARMCC\include\stdint.h)(0x6024F94E)
+I (.\inc\gpioControl.h)(0x628C55CE)
+I (.\inc\stm32f439xx.h)(0x5E37530A)
+I (.\inc\CMSIS\core_cm4.h)(0x5D81BA6E)
+I (.\inc\config.h)(0x5E3796BA)
+I (.\inc\CMSIS\core_cmInstr.h)(0x5D81BA6E)
+I (.\inc\CMSIS\cmsis_armcc.h)(0x5D81BA6E)
+I (.\inc\CMSIS\core_cmFunc.h)(0x5D81BA6E)
+I (.\inc\CMSIS\core_cmSimd.h)(0x5D81BA6E)
+I (.\RTE\Device\STM32F439IITx\system_stm32f4xx.h)(0x5D81BA74)
+F (.\src\homeManagement.c)(0x628C875B)(--c99 -c --cpu Cortex-M4.fp.sp -D__EVAL -D__MICROLIB -g -O0 --apcs=interwork -I .\src\CMSIS -I .\src\CMSIS\arm_math -I .\inc -I .\inc\CMSIS -I .\RTE\Device\STM32F439IITx -D__UVISION_VERSION="536" -D_RTE_ -DSTM32F439xx -D_RTE_ -DDAUGHTER_REV1 -DSTM32F439-o .\ram\homemanagement.o --list_dir ".\\RAM\\" --list --omf_browse .\ram\homemanagement.crf --depend .\ram\homemanagement.d)
+I (.\inc\homeManagement.h)(0x628C82AF)
+I (C:\Keil_v5\ARM\ARMCC\include\stdint.h)(0x6024F94E)
+I (C:\Keil_v5\ARM\ARMCC\include\stdbool.h)(0x6024F94C)
 I (.\inc\gpioControl.h)(0x628C55CE)
 I (.\inc\stm32f439xx.h)(0x5E37530A)
 I (.\inc\CMSIS\core_cm4.h)(0x5D81BA6E)
@@ -87,9 +73,8 @@ F (.\inc\stm32f439xx.h)(0x5E37530A)()
 F (.\inc\ioMapping.h)(0x5E377CA6)()
 F (.\RTE\Device\STM32F439IITx\system_stm32f4xx.h)(0x5D81BA74)()
 F (.\inc\gpioControl.h)(0x628C55CE)()
-F (.\inc\acSystem.h)(0x628C5C32)()
-F (.\inc\lightSystem.h)(0x628C5C19)()
-F (.\inc\peripherals.h)(0x628C4600)()
+F (.\inc\peripherals.h)(0x628C63F5)()
+F (.\inc\homeManagement.h)(0x628C82AF)()
 F (RTE\Device\STM32F439IITx\startup_stm32f439xx.s)(0x5E379714)(--cpu Cortex-M4.fp.sp --pd "__EVAL SETA 1" -g --apcs=interwork --pd "__MICROLIB SETA 1"-I.\RTE\_STM32F4_RAM-IC:\Users\Jean\AppData\Local\Arm\Packs\ARM\CMSIS\5.8.0\CMSIS\Core\Include-IC:\Users\Jean\AppData\Local\Arm\Packs\Keil\STM32F4xx_DFP\2.16.0\Drivers\CMSIS\Device\ST\STM32F4xx\Include--pd "__UVISION_VERSION SETA 536" --pd "_RTE_ SETA 1" --pd "STM32F439xx SETA 1" --pd "_RTE_ SETA 1"--list .\ram\startup_stm32f439xx.lst --xref -o .\ram\startup_stm32f439xx.o --depend .\ram\startup_stm32f439xx.d)
 F (RTE\Device\STM32F439IITx\system_stm32f4xx.c)(0x60715230)(--c99 -c --cpu Cortex-M4.fp.sp -D__EVAL -D__MICROLIB -g -O0 --apcs=interwork -I .\inc -I .\inc\CMSIS -I .\RTE\Device\STM32F439IITx -D__UVISION_VERSION="536" -D_RTE_ -DSTM32F439xx -D_RTE_ -DDAUGHTER_REV1 -DSTM32F439-o .\ram\system_stm32f4xx.o --list_dir ".\\RAM\\" --list --omf_browse .\ram\system_stm32f4xx.crf --depend .\ram\system_stm32f4xx.d)
 I (.\inc\config.h)(0x5E3796BA)

@@ -468,16 +468,6 @@
               <FilePath>.\src\gpioControl.c</FilePath>
             </File>
             <File>
-              <FileName>acSystem.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\src\acSystem.c</FilePath>
-            </File>
-            <File>
-              <FileName>lightSystem.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\src\lightSystem.c</FilePath>
-            </File>
-            <File>
               <FileName>main.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\src\main.c</FilePath>
@@ -486,6 +476,11 @@
               <FileName>peripherals.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\src\peripherals.c</FilePath>
+            </File>
+            <File>
+              <FileName>homeManagement.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\src\homeManagement.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -523,19 +518,14 @@
               <FilePath>.\inc\gpioControl.h</FilePath>
             </File>
             <File>
-              <FileName>acSystem.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>.\inc\acSystem.h</FilePath>
-            </File>
-            <File>
-              <FileName>lightSystem.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>.\inc\lightSystem.h</FilePath>
-            </File>
-            <File>
               <FileName>peripherals.h</FileName>
               <FileType>5</FileType>
               <FilePath>.\inc\peripherals.h</FilePath>
+            </File>
+            <File>
+              <FileName>homeManagement.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\inc\homeManagement.h</FilePath>
             </File>
           </Files>
         </Group>
@@ -1078,16 +1068,6 @@
               <FilePath>.\src\gpioControl.c</FilePath>
             </File>
             <File>
-              <FileName>acSystem.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\src\acSystem.c</FilePath>
-            </File>
-            <File>
-              <FileName>lightSystem.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\src\lightSystem.c</FilePath>
-            </File>
-            <File>
               <FileName>main.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\src\main.c</FilePath>
@@ -1096,6 +1076,11 @@
               <FileName>peripherals.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\src\peripherals.c</FilePath>
+            </File>
+            <File>
+              <FileName>homeManagement.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\src\homeManagement.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -1133,19 +1118,14 @@
               <FilePath>.\inc\gpioControl.h</FilePath>
             </File>
             <File>
-              <FileName>acSystem.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>.\inc\acSystem.h</FilePath>
-            </File>
-            <File>
-              <FileName>lightSystem.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>.\inc\lightSystem.h</FilePath>
-            </File>
-            <File>
               <FileName>peripherals.h</FileName>
               <FileType>5</FileType>
               <FilePath>.\inc\peripherals.h</FilePath>
+            </File>
+            <File>
+              <FileName>homeManagement.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\inc\homeManagement.h</FilePath>
             </File>
           </Files>
         </Group>

@@ -64,3 +64,18 @@ void initTimer(Timer *timer)
     }
     return;
 }
+
+void initADC3(void)
+{
+    ADC123_COMMON->CCR &= ~(ADC_CCR_VBATE);                                 // disable vbate
+    ADC123_COMMON->CCR |= (ADC_CCR_TSVREFE) | (0x03 << ADC_CCR_ADCPRE_Pos); // enable temperature sensor
+    ADC3->CR1 &= ~((ADC_CR1_SCAN) | (0x00 << ADC_CR1_RES_Pos));             // disable scan mode and resolution of 12bits (15 ADCCLK cycles)
+    ADC3->CR2 &= ~(ADC_CR2_CONT | ADC_CR2_ALIGN | ADC_CR2_SWSTART);         // right aligment, single conversion mode, reset state
+    ADC3->SQR3 &= ~(ADC_SQR3_SQ1_Msk);                                      // clear first conversion
+    ADC3->SQR3 |= 0x08;                                                     // conversion at 8th channel
+    ADC3->SQR1 &= ~(ADC_SQR1_L_Msk);                                        // 1 conversion
+    ADC3->SMPR2 &= ~(ADC_SMPR2_SMP0_Msk);                                   // clear sample time (cycles)
+    ADC3->SMPR2 |= 0x03 << ADC_SMPR2_SMP0_Pos;                              // set sample time of SMP0 to 56 cycles
+    ADC3->CR2 |= ADC_CR2_ADON;
+    return;
+}

@@ -7991,65 +7991,22 @@ typedef struct
 
 #line 13 "src\\main.c"
 
-#line 1 ".\\inc\\acSystem.h"
+#line 1 ".\\inc\\homeManagement.h"
 
 
 
-#line 5 ".\\inc\\acSystem.h"
-#line 6 ".\\inc\\acSystem.h"
-#line 7 ".\\inc\\acSystem.h"
+#line 5 ".\\inc\\homeManagement.h"
+#line 6 ".\\inc\\homeManagement.h"
+#line 7 ".\\inc\\homeManagement.h"
 
-
-typedef struct Heater {
+ 
+typedef struct Component {
     _Bool is_on;
     GPIO_Config* gpio_config;
-} Heater;
-
-typedef struct Cooler {
-    _Bool is_on;
-    GPIO_Config* gpio_config;
-} Cooler;
-
-typedef struct Fan {
-    _Bool is_on;
-    GPIO_Config* gpio_config;
-} Fan;
-
-typedef struct FanSwitch {
-    _Bool was_toggled; 
-    _Bool was_pressed;
-    _Bool is_pressed;
-    volatile uint16_t has_been_held_for;
-    GPIO_Config* gpio_config;
-} FanSwitch;
-
-typedef struct Thermometer {
-    volatile uint16_t adc_val;
-    volatile float celcius;
-    GPIO_Config* gpio_config;
-} Thermometer;
-
-void updateFanSwitch(FanSwitch*);
-void turnOnFan(Fan*);
-void turnOffFan(Fan*);
-
-
-
-#line 15 "src\\main.c"
-#line 1 ".\\inc\\lightSystem.h"
-
-
-
-#line 5 ".\\inc\\lightSystem.h"
-#line 6 ".\\inc\\lightSystem.h"
-#line 7 ".\\inc\\lightSystem.h"
-
-typedef struct Light {
-    _Bool is_on;
-    GPIO_Config* gpio_config;
-} Light;
+} Component;
 
 typedef struct LightSwitch {
+    _Bool is_disabled;
     _Bool was_toggled; 
     _Bool was_pressed;
     _Bool is_pressed;
@@ -8062,10 +8019,32 @@ typedef struct LightSensor {
     GPIO_Config* gpio_config;
 } LightSensor;
 
+typedef struct FanSwitch {
+    _Bool was_toggled; 
+    _Bool was_pressed;
+    _Bool is_pressed;
+    _Bool override_active;
+    volatile uint16_t override_time; 
+    volatile uint16_t has_been_held_for;
+    GPIO_Config* gpio_config;
+} FanSwitch;
+
+typedef struct Thermometer {
+    volatile uint16_t adc_val;
+    volatile float celcius;
+    GPIO_Config* gpio_config;
+} Thermometer;
+
+void updateFanSwitch(FanSwitch*);
+void setOverride(FanSwitch*);
+void updateThermometer(Thermometer*);
 void updateLightSwitch(LightSwitch*);
-void turnOnLight(Light*);
-void turnOffLight(Light*);
-#line 16 "src\\main.c"
+void updateLightSensor(LightSensor*);
+void toggle(Component*);
+void turnOn(Component*);
+void turnOff(Component*);
+
+#line 15 "src\\main.c"
 #line 1 ".\\inc\\peripherals.h"
 
 
@@ -8109,8 +8088,9 @@ void initUART(UARTInterface*);
 
  
 void initTimer(Timer*);
+void initADC3(void);
 
-#line 17 "src\\main.c"
+#line 16 "src\\main.c"
 
 #pragma diag_warning 1 
 
@@ -8210,28 +8190,28 @@ Timer monitoring_timer = {
     .is_running = 1,
     .time_in_ms = 1000,
     .in_one_pulse_mode = 0,
-    .clock_speed = 42000000,
+    .clock_speed = 42000000*2, 
     .timer_component = ((TIM_TypeDef *) (0x40000000U + 0x1000U))};
 Timer rising_edge_timer = {
     .is_running = 1,
     .time_in_ms = 50,
     .in_one_pulse_mode = 0,
-    .clock_speed = 42000000,
+    .clock_speed = 42000000*2,
     .timer_component = ((TIM_TypeDef *) (0x40000000U + 0x1400U))};
 Timer uart_priority_timer = {
     .is_running = 0,
     .time_in_ms = 1000,
     .in_one_pulse_mode = 1,
-    .clock_speed = 84000000,
+    .clock_speed = 84000000*2,
     .timer_component = ((TIM_TypeDef *) ((0x40000000U + 0x00010000U) + 0x4400U))};
 
  
 
-
-Light light = {
+Component light = {
     .is_on = 0,
     .gpio_config = &light_config};
 LightSwitch light_switch = {
+    .is_disabled = 0,
     .was_toggled = 0,
     .was_pressed = 0,
     .is_pressed = 0,
@@ -8241,19 +8221,21 @@ LightSensor light_sensor = {
     .is_active = 0,
     .gpio_config = &light_sensor_config};
 
-Heater heater = {
+Component heater = {
     .is_on = 0,
     .gpio_config = &heater_config};
-Cooler cooler = {
+Component cooler = {
     .is_on = 0,
     .gpio_config = &cooler_config};
-Fan fan = {
+Component fan = {
     .is_on = 0,
     .gpio_config = &fan_config};
 FanSwitch fan_switch = {
     .was_toggled = 0,
     .was_pressed = 0,
     .is_pressed = 0,
+    .override_active = 0,
+    .override_time = 0,
     .has_been_held_for = 0,
     .gpio_config = &fan_switch_config};
 Thermometer thermometer = {
@@ -8306,8 +8288,7 @@ int main(void)
   initTimer(&monitoring_timer);
   initTimer(&rising_edge_timer);
   initTimer(&uart_priority_timer);
-  
-	
+  initADC3();
 	
    
    
@@ -8318,26 +8299,46 @@ int main(void)
    
   while (1)
   {
-    updateLightSwitch(&light_switch);
-    if (light_switch.was_toggled) {
-      
-      if (light.is_on) {
-        turnOffLight(&light);
-      } else {
-        turnOnLight(&light);
-      }
-      light_switch.was_toggled = 0;
-    }
+    
     
     updateFanSwitch(&fan_switch);
+    updateLightSensor(&light_sensor);
+    updateLightSwitch(&light_switch);
+
+    
+ 
     if (fan_switch.was_toggled) {
-      if (fan.is_on) {
-        turnOffFan(&fan);
-      } else {
-        turnOnFan(&fan);
-      }
-      fan_switch.was_toggled = 0;
+      turnOff(&fan);
+      
+      setOverride(&fan_switch);
     }
+     
+    
+    
+    if (thermometer.celcius < 22) {
+      turnOn(&heater);
+      if (!fan_switch.override_active) { turnOn(&fan); }
+      turnOff(&cooler);
+    } else if (thermometer.celcius > 24) {
+      turnOn(&cooler);
+      if (!fan_switch.override_active) { turnOn(&fan); }
+      turnOff(&heater);
+    } else {
+      turnOff(&heater);
+      turnOff(&cooler);
+      turnOff(&fan);
+    }
+
+    
+    if (light_sensor.is_active) {
+      light_switch.is_disabled = 1;
+    } else {
+      light_switch.is_disabled = 0;
+    }
+    if (light_switch.was_toggled) {
+      toggle(&light);
+    }
+
   }
 }
 
@@ -8345,16 +8346,22 @@ int main(void)
 
 
 
-
-
  
 void TIM6_DAC_IRQHandler(void) {
   
   ((TIM_TypeDef *) (0x40000000U + 0x1000U))->SR &= ~((0x1U << (0U)));
+  
+
+
+
+
+
+ 
 
   
   __asm("isb");
 }
+
 
 
 
@@ -8364,14 +8371,15 @@ void TIM7_IRQHandler(void) {
   
   ((TIM_TypeDef *) (0x40000000U + 0x1400U))->SR &= ~((0x1U << (0U)));
 
-  
   if (fan_switch.is_pressed) {
     fan_switch.has_been_held_for += 50;
   }
   if (light_switch.is_pressed) {
     light_switch.has_been_held_for += 50;
   }
-
+  if (fan_switch.override_active) {
+    fan_switch.override_time += 50;
+  }
   
   __asm("isb");
 }

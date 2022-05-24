@@ -40,5 +40,6 @@ void initUART(UARTInterface*);
     Configure a timer's control register, enable its interrupts, and enable it if ready.
 */
 void initTimer(Timer*);
+void initADC3(void);
 
 #endif //PERIPHERALS_H

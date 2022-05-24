@@ -23823,74 +23823,25 @@ N
 N#endif
 L 13 "src\main.c" 2
 N
-N#include "acSystem.h"
-L 1 ".\inc\acSystem.h" 1
-N#ifndef ACSYSTEM_H
-N#define ACSYSTEM_H
+N#include "homeManagement.h"
+L 1 ".\inc\homeManagement.h" 1
+N#ifndef HOMEMANAGEMENT_H
+N#define HOMEMANAGEMENT_H
 N
 N#include <stdint.h>
 N#include <stdbool.h>
 N#include "gpioControl.h"
 N
-N
-Ntypedef struct Heater {
+N/* Component is the generic term for any HMS output. Lights, fans, etc. */
+Ntypedef struct Component {
 N    bool is_on;
 X    _Bool is_on;
 N    GPIO_Config* gpio_config;
-N} Heater;
-N
-Ntypedef struct Cooler {
-N    bool is_on;
-X    _Bool is_on;
-N    GPIO_Config* gpio_config;
-N} Cooler;
-N
-Ntypedef struct Fan {
-N    bool is_on;
-X    _Bool is_on;
-N    GPIO_Config* gpio_config;
-N} Fan;
-N
-Ntypedef struct FanSwitch {
-N    bool was_toggled; //if was_pressed and has_been_held_for >= 500ms, then FanSwitch was_toggled.
-X    _Bool was_toggled; 
-N    bool was_pressed;
-X    _Bool was_pressed;
-N    bool is_pressed;
-X    _Bool is_pressed;
-N    volatile uint16_t has_been_held_for;
-N    GPIO_Config* gpio_config;
-N} FanSwitch;
-N
-Ntypedef struct Thermometer {
-N    volatile uint16_t adc_val;
-N    volatile float celcius;
-N    GPIO_Config* gpio_config;
-N} Thermometer;
-N
-Nvoid updateFanSwitch(FanSwitch*);
-Nvoid turnOnFan(Fan*);
-Nvoid turnOffFan(Fan*);
-N
-N#endif //ACSYSTEM_H
-N
-L 15 "src\main.c" 2
-N#include "lightSystem.h"
-L 1 ".\inc\lightSystem.h" 1
-N#ifndef LIGHTSYSTEM_H
-N#define LIGHTSYSTEM_H
-N
-N#include <stdint.h>
-N#include <stdbool.h>
-N#include "gpioControl.h"
-N
-Ntypedef struct Light {
-N    bool is_on;
-X    _Bool is_on;
-N    GPIO_Config* gpio_config;
-N} Light;
+N} Component;
 N
 Ntypedef struct LightSwitch {
+N    bool is_disabled;
+X    _Bool is_disabled;
 N    bool was_toggled; //if was_pressed and has_been_held_for > 500ms, then LightSwitch was_toggled.
 X    _Bool was_toggled; 
 N    bool was_pressed;
@@ -23907,12 +23858,38 @@ X    _Bool is_active;
 N    GPIO_Config* gpio_config;
 N} LightSensor;
 N
+Ntypedef struct FanSwitch {
+N    bool was_toggled; //if was_pressed and has_been_held_for >= 500ms, then FanSwitch was_toggled.
+X    _Bool was_toggled; 
+N    bool was_pressed;
+X    _Bool was_pressed;
+N    bool is_pressed;
+X    _Bool is_pressed;
+N    bool override_active;
+X    _Bool override_active;
+N    volatile uint16_t override_time; // in milliseconds
+N    volatile uint16_t has_been_held_for;
+N    GPIO_Config* gpio_config;
+N} FanSwitch;
+N
+Ntypedef struct Thermometer {
+N    volatile uint16_t adc_val;
+N    volatile float celcius;
+N    GPIO_Config* gpio_config;
+N} Thermometer;
+N
+Nvoid updateFanSwitch(FanSwitch*);
+Nvoid setOverride(FanSwitch*);
+Nvoid updateThermometer(Thermometer*);
 Nvoid updateLightSwitch(LightSwitch*);
-Nvoid turnOnLight(Light*);
-Nvoid turnOffLight(Light*);
-W ".\inc\lightSystem.h" 29 7 last line of file ends without a newline
-N#endif
-L 16 "src\main.c" 2
+Nvoid updateLightSensor(LightSensor*);
+Nvoid toggle(Component*);
+Nvoid turnOn(Component*);
+Nvoid turnOff(Component*);
+N
+W ".\inc\homeManagement.h" 53 26 last line of file ends without a newline
+N#endif //HOMEMANAGEMENT_H
+L 15 "src\main.c" 2
 N#include "peripherals.h"
 L 1 ".\inc\peripherals.h" 1
 N#ifndef PERIPHERALS_H
@@ -23960,10 +23937,11 @@ N/* initTimer:
 N    Configure a timer's control register, enable its interrupts, and enable it if ready.
 N*/
 Nvoid initTimer(Timer*);
+Nvoid initADC3(void);
 N
-W ".\inc\peripherals.h" 44 23 last line of file ends without a newline
+W ".\inc\peripherals.h" 45 23 last line of file ends without a newline
 N#endif //PERIPHERALS_H
-L 17 "src\main.c" 2
+L 16 "src\main.c" 2
 N
 N#pragma diag_warning 1 // Disable warning:  #1-D: last line of file ends without a newline
 N
@@ -24077,8 +24055,8 @@ X    .is_running = 1,
 N    .time_in_ms = 1000,
 N    .in_one_pulse_mode = false,
 X    .in_one_pulse_mode = 0,
-N    .clock_speed = APB1_ClkSpeed,
-X    .clock_speed = 42000000,
+N    .clock_speed = APB1_ClkSpeed*2, // The timers operate at 2x bus speed for some reason...
+X    .clock_speed = 42000000*2, 
 N    .timer_component = TIM6};
 X    .timer_component = ((TIM_TypeDef *) (0x40000000U + 0x1000U))};
 NTimer rising_edge_timer = {
@@ -24088,8 +24066,8 @@ N    .time_in_ms = RISING_EDGE_TIMER_PERIOD,
 X    .time_in_ms = 50,
 N    .in_one_pulse_mode = false,
 X    .in_one_pulse_mode = 0,
-N    .clock_speed = APB1_ClkSpeed,
-X    .clock_speed = 42000000,
+N    .clock_speed = APB1_ClkSpeed*2,
+X    .clock_speed = 42000000*2,
 N    .timer_component = TIM7};
 X    .timer_component = ((TIM_TypeDef *) (0x40000000U + 0x1400U))};
 NTimer uart_priority_timer = {
@@ -24098,19 +24076,20 @@ X    .is_running = 0,
 N    .time_in_ms = 1000,
 N    .in_one_pulse_mode = true,
 X    .in_one_pulse_mode = 1,
-N    .clock_speed = APB2_ClkSpeed,
-X    .clock_speed = 84000000,
+N    .clock_speed = APB2_ClkSpeed*2,
+X    .clock_speed = 84000000*2,
 N    .timer_component = TIM10};
 X    .timer_component = ((TIM_TypeDef *) ((0x40000000U + 0x00010000U) + 0x4400U))};
 N
 N/****************** HOME MANAGEMENT SYSTEM COMPONENTS ******************/
-N// Unfortunately we don't have constructors for these.
-N// Leave uninitialised until we've determined member data.
-NLight light = {
+N// Unfortunately we don't have constructors for these, so here we go.
+NComponent light = {
 N    .is_on = false,
 X    .is_on = 0,
 N    .gpio_config = &light_config};
 NLightSwitch light_switch = {
+N    .is_disabled = false,
+X    .is_disabled = 0,
 N    .was_toggled = false,
 X    .was_toggled = 0,
 N    .was_pressed = false,
@@ -24124,15 +24103,15 @@ N    .is_active = false,
 X    .is_active = 0,
 N    .gpio_config = &light_sensor_config};
 N
-NHeater heater = {
+NComponent heater = {
 N    .is_on = false,
 X    .is_on = 0,
 N    .gpio_config = &heater_config};
-NCooler cooler = {
+NComponent cooler = {
 N    .is_on = false,
 X    .is_on = 0,
 N    .gpio_config = &cooler_config};
-NFan fan = {
+NComponent fan = {
 N    .is_on = false,
 X    .is_on = 0,
 N    .gpio_config = &fan_config};
@@ -24143,6 +24122,9 @@ N    .was_pressed = false,
 X    .was_pressed = 0,
 N    .is_pressed = false,
 X    .is_pressed = 0,
+N    .override_active = false,
+X    .override_active = 0,
+N    .override_time = 0,
 N    .has_been_held_for = 0,
 N    .gpio_config = &fan_switch_config};
 NThermometer thermometer = {
@@ -24204,8 +24186,7 @@ N	initUART(&uart);
 N  initTimer(&monitoring_timer);
 N  initTimer(&rising_edge_timer);
 N  initTimer(&uart_priority_timer);
-N  // ADC?
-N	
+N  initADC3();
 N	
 N  /***************************************************/
 N  /*              INITIALISATION END                 */
@@ -24216,28 +24197,48 @@ N  /*                    PROGRAM START                */
 N  /***************************************************/
 N  while (1)
 N  {
-N    updateLightSwitch(&light_switch);
-N    if (light_switch.was_toggled) {
-N      // For now, just toggle the light on and off.
-N      if (light.is_on) {
-N        turnOffLight(&light);
-N      } else {
-N        turnOnLight(&light);
-N      }
-N      light_switch.was_toggled = false;
-X      light_switch.was_toggled = 0;
-N    }
-N    // Same as above, except it's a fan.
+N    // Question for Glenn: should we call all update functions at once?
+N    //  Or call them "just in time" - right before the I/O logic is handled?
 N    updateFanSwitch(&fan_switch);
+N    updateLightSensor(&light_sensor);
+N    updateLightSwitch(&light_switch);
+N
+N    /* When the fan switch is toggled, we want to override the AC system logic
+N        by turning the fan OFF for 15s */
 N    if (fan_switch.was_toggled) {
-N      if (fan.is_on) {
-N        turnOffFan(&fan);
-N      } else {
-N        turnOnFan(&fan);
-N      }
-N      fan_switch.was_toggled = false;
-X      fan_switch.was_toggled = 0;
+N      turnOff(&fan);
+N      // Start (or reset) the override timer (controlled by TIM6)
+N      setOverride(&fan_switch);
 N    }
+N    /* Task C: AC logic */
+N    // TODO: While the ADC doesn't work, test by setting temperature manually.
+N    // Once the ADC is working, just call updateThermometer(&thermometer) on a new line below.
+N    if (thermometer.celcius < 22) {
+N      turnOn(&heater);
+N      if (!fan_switch.override_active) { turnOn(&fan); }
+N      turnOff(&cooler);
+N    } else if (thermometer.celcius > 24) {
+N      turnOn(&cooler);
+N      if (!fan_switch.override_active) { turnOn(&fan); }
+N      turnOff(&heater);
+N    } else {
+N      turnOff(&heater);
+N      turnOff(&cooler);
+N      turnOff(&fan);
+N    }
+N
+N    //Task D: light switch only works if the sensor isn't active
+N    if (light_sensor.is_active) {
+N      light_switch.is_disabled = true;
+X      light_switch.is_disabled = 1;
+N    } else {
+N      light_switch.is_disabled = false;
+X      light_switch.is_disabled = 0;
+N    }
+N    if (light_switch.was_toggled) {
+N      toggle(&light);
+N    }
+N
 N  }
 N}
 N
@@ -24245,13 +24246,18 @@ N/****************** INTERRUPTS *****************/
 N/* TIM6_DAC_IRQHandler: TIM6 Global Interrupt
 N    Occurs every 1s. Handles:
 N    - monitoring (sending info to the UART)
-N    - 15s timer for the fan switch
-N    - 15s timer for the AC system
 N*/
 Nvoid TIM6_DAC_IRQHandler(void) {
 N  // Clear update interrupt
 N  TIM6->SR &= ~(TIM_SR_UIF);
 X  ((TIM_TypeDef *) (0x40000000U + 0x1000U))->SR &= ~((0x1U << (0U)));
+N  /* Send out the following variables:
+N  thermometer.celcius
+N  light.is_on
+N  fan.is_on
+N  heater.is_on
+N  cooler.is_on
+N  */
 N
 N  // Flush pipeline (allow last instruction to go through, if it was interrupted midway)
 N  __asm("isb");
@@ -24260,13 +24266,13 @@ N
 N/* TIM7_IRQHandler: TIM7 Global Interrupt
 N    Occurs regularly, every (RISING_EDGE_TIMER_PERIOD)ms. Handles:
 N    - updating how long a switch has been held for, if it is pressed
+N    - 15s for the fan switch override
 N*/
 Nvoid TIM7_IRQHandler(void) {
 N  // Clear update interrupt
 N  TIM7->SR &= ~(TIM_SR_UIF);
 X  ((TIM_TypeDef *) (0x40000000U + 0x1400U))->SR &= ~((0x1U << (0U)));
 N
-N  //TODO: Verify the logic for this. Is 'held for' was_pressed && is_pressed, or just is_pressed?
 N  if (fan_switch.is_pressed) {
 N    fan_switch.has_been_held_for += RISING_EDGE_TIMER_PERIOD;
 X    fan_switch.has_been_held_for += 50;
@@ -24275,7 +24281,10 @@ N  if (light_switch.is_pressed) {
 N    light_switch.has_been_held_for += RISING_EDGE_TIMER_PERIOD;
 X    light_switch.has_been_held_for += 50;
 N  }
-N
+N  if (fan_switch.override_active) {
+N    fan_switch.override_time += RISING_EDGE_TIMER_PERIOD;
+X    fan_switch.override_time += 50;
+N  }
 N  // Flush pipeline (allow last instruction to go through, if it was interrupted midway)
 N  __asm("isb");
 N}

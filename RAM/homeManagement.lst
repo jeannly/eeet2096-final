@@ -1,8 +1,8 @@
-L 1 "src\lightSystem.c"
-N#include "lightSystem.h"
-L 1 ".\inc\lightSystem.h" 1
-N#ifndef LIGHTSYSTEM_H
-N#define LIGHTSYSTEM_H
+L 1 "src\homeManagement.c"
+N#include "homeManagement.h"
+L 1 ".\inc\homeManagement.h" 1
+N#ifndef HOMEMANAGEMENT_H
+N#define HOMEMANAGEMENT_H
 N
 N#include <stdint.h>
 L 1 "C:\Keil_v5\ARM\ARMCC\Bin\..\include\stdint.h" 1
@@ -335,7 +335,7 @@ N
 N#endif /* __stdint_h */
 N
 N/* end of stdint.h */
-L 5 ".\inc\lightSystem.h" 2
+L 5 ".\inc\homeManagement.h" 2
 N#include <stdbool.h>
 L 1 "C:\Keil_v5\ARM\ARMCC\Bin\..\include\stdbool.h" 1
 N/* stdbool.h: ISO/IEC 9899:1999 (C99), section 7.16 */
@@ -365,7 +365,7 @@ N  #endif
 N
 N#endif /* __bool_true_false_are_defined */
 N
-L 6 ".\inc\lightSystem.h" 2
+L 6 ".\inc\homeManagement.h" 2
 N#include "gpioControl.h"
 L 1 ".\inc\gpioControl.h" 1
 N/********************************************
@@ -21797,15 +21797,18 @@ N		void gpio_resetGPIO(GPIO_TypeDef *, GPIOPin);							// Clear an individual I/
 N			
 N
 N#endif
-L 7 ".\inc\lightSystem.h" 2
+L 7 ".\inc\homeManagement.h" 2
 N
-Ntypedef struct Light {
+N/* Component is the generic term for any HMS output. Lights, fans, etc. */
+Ntypedef struct Component {
 N    bool is_on;
 X    _Bool is_on;
 N    GPIO_Config* gpio_config;
-N} Light;
+N} Component;
 N
 Ntypedef struct LightSwitch {
+N    bool is_disabled;
+X    _Bool is_disabled;
 N    bool was_toggled; //if was_pressed and has_been_held_for > 500ms, then LightSwitch was_toggled.
 X    _Bool was_toggled; 
 N    bool was_pressed;
@@ -21822,23 +21825,58 @@ X    _Bool is_active;
 N    GPIO_Config* gpio_config;
 N} LightSensor;
 N
+Ntypedef struct FanSwitch {
+N    bool was_toggled; //if was_pressed and has_been_held_for >= 500ms, then FanSwitch was_toggled.
+X    _Bool was_toggled; 
+N    bool was_pressed;
+X    _Bool was_pressed;
+N    bool is_pressed;
+X    _Bool is_pressed;
+N    bool override_active;
+X    _Bool override_active;
+N    volatile uint16_t override_time; // in milliseconds
+N    volatile uint16_t has_been_held_for;
+N    GPIO_Config* gpio_config;
+N} FanSwitch;
+N
+Ntypedef struct Thermometer {
+N    volatile uint16_t adc_val;
+N    volatile float celcius;
+N    GPIO_Config* gpio_config;
+N} Thermometer;
+N
+Nvoid updateFanSwitch(FanSwitch*);
+Nvoid setOverride(FanSwitch*);
+Nvoid updateThermometer(Thermometer*);
 Nvoid updateLightSwitch(LightSwitch*);
-Nvoid turnOnLight(Light*);
-Nvoid turnOffLight(Light*);
-W ".\inc\lightSystem.h" 29 7 last line of file ends without a newline
-N#endif
-L 2 "src\lightSystem.c" 2
+Nvoid updateLightSensor(LightSensor*);
+Nvoid toggle(Component*);
+Nvoid turnOn(Component*);
+Nvoid turnOff(Component*);
+N
+W ".\inc\homeManagement.h" 53 26 last line of file ends without a newline
+N#endif //HOMEMANAGEMENT_H
+L 2 "src\homeManagement.c" 2
 N
 N#include <stdbool.h>
 N#include <stdint.h>
 N#include "gpioControl.h"
 N
-N/* Updates light switch status.
+N/* 
+NUpdates light switch status, based on rising edge logic.
 NFirst, reads the switch's current status (pressed or not pressed).
 NThen, uses its variables to determine if it's been toggled on the rising edge.
 N*/
 Nvoid updateLightSwitch(LightSwitch* light_switch) {
-N// 1. Get current switch status
+N// Reset the toggle logic
+N    if (light_switch->was_toggled) {
+N        light_switch->was_toggled = false;
+X        light_switch->was_toggled = 0;
+N    }
+N//  Get current switch status
+N    if (light_switch->is_disabled) {
+N        return;
+N    }
 N    uint8_t gpio_val;
 N    gpio_val = gpio_getPinValue(light_switch->gpio_config->port, light_switch->gpio_config->pin);
 N    if (gpio_val == 0) { //  if switch is ON (because active low)
@@ -21849,30 +21887,127 @@ N        light_switch->is_pressed = false;
 X        light_switch->is_pressed = 0;
 N    }
 N
-N// 2. Have we detected a rising edge?
-N    if (light_switch->was_pressed && !light_switch->is_pressed 
-N        && light_switch->has_been_held_for >= 500) {
-N        light_switch->was_toggled = true;
-X        light_switch->was_toggled = 1;
+N// Button lifted? 
+N    if (light_switch->was_pressed && !light_switch->is_pressed) {
+N        // Is our button press valid?
+N        if (light_switch->has_been_held_for >= 500) {
+N            light_switch->was_toggled = true;
+X            light_switch->was_toggled = 1;
+N        }
 N        light_switch->has_been_held_for = 0;
 N    }
-N// 3. Update the last state
+N// Save the reading as the last state
 N    light_switch->was_pressed = light_switch->is_pressed;
 N    return;
 N}
 N
-Nvoid turnOnLight(Light* light) {
-N    // LEDs are active LOW, so clear the light's bit
-N    gpio_resetGPIO(light->gpio_config->port, light->gpio_config->pin);
-N    light->is_on = true;
-X    light->is_on = 1;
+N
+N
+N/* 
+NRead the light sensor, update its state.
+N*/
+Nvoid updateLightSensor(LightSensor* sensor) {
+N    uint8_t gpio_val;
+N    gpio_val = gpio_getPinValue(sensor->gpio_config->port, sensor->gpio_config->pin);
+N    if (gpio_val == 0) { //  if switch is ON (because active low)
+N        sensor->is_active = true;
+X        sensor->is_active = 1;
+N    } else {
+N        sensor->is_active = false;
+X        sensor->is_active = 0;
+N    }
 N    return;
 N}
-Nvoid turnOffLight(Light* light) {
-N    // LEDs are active LOW, so set the light's bit
-N    gpio_setGPIO(light->gpio_config->port, light->gpio_config->pin);
-N    light->is_on = false;
-X    light->is_on = 0;
+N
+N/* 
+NUpdates fan switch status, based on rising edge logic.
+N*/
+Nvoid updateFanSwitch(FanSwitch* fan_switch) {
+N// If the switch has been pressed and the override is active, 
+N//    disable the override it once it's been active for 15 seconds.
+N    if (fan_switch->override_active) {
+N        if (fan_switch->override_time >= 15000) {
+N            fan_switch->override_active = false;
+X            fan_switch->override_active = 0;
+N            fan_switch->override_time = 0;
+N        }
+N    }
+N// Reset the toggle logic
+N    if (fan_switch->was_toggled) {
+N        fan_switch->was_toggled = false;
+X        fan_switch->was_toggled = 0;
+N    }
+N
+N// Read current switch status
+N    uint8_t gpio_val;
+N    gpio_val = gpio_getPinValue(fan_switch->gpio_config->port, fan_switch->gpio_config->pin);
+N    if (gpio_val == 0) { //  if switch is ON (because active low)
+N        fan_switch->is_pressed = true;
+X        fan_switch->is_pressed = 1;
+N    } else {
+N        fan_switch->is_pressed = false;
+X        fan_switch->is_pressed = 0;
+N    }
+N
+N// Button lifted? 
+N    if (fan_switch->was_pressed && !fan_switch->is_pressed) {
+N        // Is our button press valid?
+N        if (fan_switch->has_been_held_for >= 500) {
+N            fan_switch->was_toggled = true;
+X            fan_switch->was_toggled = 1;
+N        }
+N        fan_switch->has_been_held_for = 0;
+N    }
+N// Save the reading as the last state
+N    fan_switch->was_pressed = fan_switch->is_pressed;
 N    return;
-W "src\lightSystem.c" 43 2 last line of file ends without a newline
+N}
+N
+Nvoid setOverride(FanSwitch* fan_switch) {
+N    fan_switch->override_active = true;
+X    fan_switch->override_active = 1;
+N    fan_switch->override_time = 0;
+N    return;
+N}
+N
+N/* Updates thermometer readings from ADC3.
+N    Reads from ADC3, and stores in in both adc and celcius.
+N*/
+Nvoid updateThermometer(Thermometer* thermometer) {
+N    ADC3->CR2 |= ADC_CR2_SWSTART;
+X    ((ADC_TypeDef *) ((0x40000000U + 0x00010000U) + 0x2200U))->CR2 |= (0x1U << (30U));
+N	while((ADC3->SR & ADC_SR_EOC) == 0x00); //check if regular channel is complete
+X	while((((ADC_TypeDef *) ((0x40000000U + 0x00010000U) + 0x2200U))->SR & (0x1U << (1U))) == 0x00); 
+N	thermometer->adc_val = (ADC3->DR & 0x0000FFFF);
+X	thermometer->adc_val = (((ADC_TypeDef *) ((0x40000000U + 0x00010000U) + 0x2200U))->DR & 0x0000FFFF);
+N    // Convert ADC into celcius.
+N    //  When the ADC is 0, temperature = 8C. When ADC is 4095, temperature = 45C
+N	thermometer->celcius = ((((float)thermometer->adc_val / 4095) * 37) + 8);
+N    return;
+N}
+Nvoid toggle(Component* component) {
+N    if (component->is_on) {
+N        turnOff(component);
+N        component->is_on = false;
+X        component->is_on = 0;
+N    } else {
+N        turnOn(component);
+N        component->is_on = true;
+X        component->is_on = 1;
+N    }
+N}
+Nvoid turnOn(Component* component) {
+N    // LEDs are active LOW, so clear the component's bit
+N    gpio_resetGPIO(component->gpio_config->port, component->gpio_config->pin);
+N    component->is_on = true;
+X    component->is_on = 1;
+N    return;
+N}
+Nvoid turnOff(Component* component) {
+N    // LEDs are active LOW, so set the fan's bit
+N    gpio_setGPIO(component->gpio_config->port, component->gpio_config->pin);
+N    component->is_on = false;
+X    component->is_on = 0;
+N    return;
+W "src\homeManagement.c" 135 2 last line of file ends without a newline
 N}

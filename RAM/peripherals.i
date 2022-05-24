@@ -7905,6 +7905,7 @@ void initUART(UARTInterface*);
 
  
 void initTimer(Timer*);
+void initADC3(void);
 
 #line 2 "src\\peripherals.c"
 
@@ -8044,23 +8045,41 @@ void initTimer(Timer *timer)
     
     
     
-    timer->timer_component->PSC = (uint16_t)((timer->clock_speed/5000) - 1);     
-    timer->timer_component->DIER |= (0x1U << (0U)); 
-    timer->timer_component->CR1 |= (0x1U << (7U)); 
-    timer->timer_component->ARR = 5 * timer->time_in_ms;        
+    timer->timer_component->PSC = (uint16_t)((timer->clock_speed / 5000) - 1);
+    timer->timer_component->DIER |= (0x1U << (0U));        
+    timer->timer_component->CR1 |= (0x1U << (7U));         
+    timer->timer_component->ARR = 5 * timer->time_in_ms; 
+
     
     
-    
-    if (timer->timer_component == ((TIM_TypeDef *) ((0x40000000U + 0x00010000U) + 0x4400U))) {
+    if (timer->timer_component == ((TIM_TypeDef *) ((0x40000000U + 0x00010000U) + 0x4400U)))
+    {
         
         timer->timer_component->CCMR1 &= ~((0x7U << (4U)));
         timer->timer_component->CCER &= ~((0x1U << (0U)));
     }
-    if (timer->in_one_pulse_mode == 1) {
+    if (timer->in_one_pulse_mode == 1)
+    {
         timer->timer_component->CR1 |= (0x1U << (3U)); 
     }
-    if (timer->is_running == 1) {
-        timer->timer_component->CR1 |= (0x1U << (0U));  
+    if (timer->is_running == 1)
+    {
+        timer->timer_component->CR1 |= (0x1U << (0U)); 
     }
+    return;
+}
+
+void initADC3(void)
+{
+    ((ADC_Common_TypeDef *) ((0x40000000U + 0x00010000U) + 0x2300U))->CCR &= ~((0x1U << (22U)));                                 
+    ((ADC_Common_TypeDef *) ((0x40000000U + 0x00010000U) + 0x2300U))->CCR |= ((0x1U << (23U))) | (0x03 << (16U)); 
+    ((ADC_TypeDef *) ((0x40000000U + 0x00010000U) + 0x2200U))->CR1 &= ~(((0x1U << (8U))) | (0x00 << (24U)));             
+    ((ADC_TypeDef *) ((0x40000000U + 0x00010000U) + 0x2200U))->CR2 &= ~((0x1U << (1U)) | (0x1U << (11U)) | (0x1U << (30U)));         
+    ((ADC_TypeDef *) ((0x40000000U + 0x00010000U) + 0x2200U))->SQR3 &= ~((0x1FU << (0U)));                                      
+    ((ADC_TypeDef *) ((0x40000000U + 0x00010000U) + 0x2200U))->SQR3 |= 0x08;                                                     
+    ((ADC_TypeDef *) ((0x40000000U + 0x00010000U) + 0x2200U))->SQR1 &= ~((0xFU << (20U)));                                        
+    ((ADC_TypeDef *) ((0x40000000U + 0x00010000U) + 0x2200U))->SMPR2 &= ~((0x7U << (0U)));                                   
+    ((ADC_TypeDef *) ((0x40000000U + 0x00010000U) + 0x2200U))->SMPR2 |= 0x03 << (0U);                              
+    ((ADC_TypeDef *) ((0x40000000U + 0x00010000U) + 0x2200U))->CR2 |= (0x1U << (0U));
     return;
 }

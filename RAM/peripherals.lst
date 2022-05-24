@@ -21837,8 +21837,9 @@ N/* initTimer:
 N    Configure a timer's control register, enable its interrupts, and enable it if ready.
 N*/
 Nvoid initTimer(Timer*);
+Nvoid initADC3(void);
 N
-W ".\inc\peripherals.h" 44 23 last line of file ends without a newline
+W ".\inc\peripherals.h" 45 23 last line of file ends without a newline
 N#endif //PERIPHERALS_H
 L 2 "src\peripherals.c" 2
 N
@@ -23849,7 +23850,7 @@ N    // 16x over sampling
 N    uart_interface->uart->CR1 &= ~(USART_CR1_OVER8);
 X    uart_interface->uart->CR1 &= ~((0x1U << (15U)));
 N
-N    // 57.6k baudrate (assuming a clock speed of 42MHz) 
+N    // 57.6k baudrate (assuming a clock speed of 42MHz)
 N    uart_interface->uart->BRR &= 0xFFFF0000;
 N    uart_interface->uart->BRR |= (45 << USART_BRR_DIV_Mantissa_Pos) | (9 << USART_BRR_DIV_Fraction_Pos);
 X    uart_interface->uart->BRR |= (45 << (4U)) | (9 << (0U));
@@ -23890,33 +23891,61 @@ N{
 N    // Set prescaler for a clock speed of 5000Hz.
 N    //  We choose a prescaled clock speed of 5000Hz because it's easy to calculate with,
 N    //  and the prescaler value for all clock speeds fits in 16 bits.
-N    timer->timer_component->PSC = (uint16_t)((timer->clock_speed/5000) - 1);     
-N    timer->timer_component->DIER |= TIM_DIER_UIE; // Enable interrupts
-X    timer->timer_component->DIER |= (0x1U << (0U)); 
-N    timer->timer_component->CR1 |= TIM_CR1_ARPE; // Enable ARR preload
-X    timer->timer_component->CR1 |= (0x1U << (7U)); 
-N    timer->timer_component->ARR = 5 * timer->time_in_ms;        // Set the value to count up to
-N    
-N    // This should check if the timer is a general timer, 
+N    timer->timer_component->PSC = (uint16_t)((timer->clock_speed / 5000) - 1);
+N    timer->timer_component->DIER |= TIM_DIER_UIE;        // Enable interrupts
+X    timer->timer_component->DIER |= (0x1U << (0U));        
+N    timer->timer_component->CR1 |= TIM_CR1_ARPE;         // Enable ARR preload
+X    timer->timer_component->CR1 |= (0x1U << (7U));         
+N    timer->timer_component->ARR = 5 * timer->time_in_ms; // Set the value to count up to
+N
+N    // This should check if the timer is a general timer,
 N    //  but since TIM10 is the only general timer we're using, we're just simplifying the logic for time sake.
-N    if (timer->timer_component == TIM10) {
-X    if (timer->timer_component == ((TIM_TypeDef *) ((0x40000000U + 0x00010000U) + 0x4400U))) {
-N        //Disable the fancy capture/compare output stuff
+N    if (timer->timer_component == TIM10)
+X    if (timer->timer_component == ((TIM_TypeDef *) ((0x40000000U + 0x00010000U) + 0x4400U)))
+N    {
+N        // Disable the fancy capture/compare output stuff
 N        timer->timer_component->CCMR1 &= ~(TIM_CCMR1_OC1M);
 X        timer->timer_component->CCMR1 &= ~((0x7U << (4U)));
 N        timer->timer_component->CCER &= ~(TIM_CCER_CC1E);
 X        timer->timer_component->CCER &= ~((0x1U << (0U)));
 N    }
-N    if (timer->in_one_pulse_mode == true) {
-X    if (timer->in_one_pulse_mode == 1) {
+N    if (timer->in_one_pulse_mode == true)
+X    if (timer->in_one_pulse_mode == 1)
+N    {
 N        timer->timer_component->CR1 |= TIM_CR1_OPM; // Enable one pulse mode (TIM_CR1_CEN will be cleared after counting)
 X        timer->timer_component->CR1 |= (0x1U << (3U)); 
 N    }
-N    if (timer->is_running == true) {
-X    if (timer->is_running == 1) {
-N        timer->timer_component->CR1 |= TIM_CR1_CEN;  // Enable the timer
-X        timer->timer_component->CR1 |= (0x1U << (0U));  
+N    if (timer->is_running == true)
+X    if (timer->is_running == 1)
+N    {
+N        timer->timer_component->CR1 |= TIM_CR1_CEN; // Enable the timer
+X        timer->timer_component->CR1 |= (0x1U << (0U)); 
 N    }
 N    return;
-W "src\peripherals.c" 63 2 last line of file ends without a newline
+N}
+N
+Nvoid initADC3(void)
+N{
+N    ADC123_COMMON->CCR &= ~(ADC_CCR_VBATE);                                 // disable vbate
+X    ((ADC_Common_TypeDef *) ((0x40000000U + 0x00010000U) + 0x2300U))->CCR &= ~((0x1U << (22U)));                                 
+N    ADC123_COMMON->CCR |= (ADC_CCR_TSVREFE) | (0x03 << ADC_CCR_ADCPRE_Pos); // enable temperature sensor
+X    ((ADC_Common_TypeDef *) ((0x40000000U + 0x00010000U) + 0x2300U))->CCR |= ((0x1U << (23U))) | (0x03 << (16U)); 
+N    ADC3->CR1 &= ~((ADC_CR1_SCAN) | (0x00 << ADC_CR1_RES_Pos));             // disable scan mode and resolution of 12bits (15 ADCCLK cycles)
+X    ((ADC_TypeDef *) ((0x40000000U + 0x00010000U) + 0x2200U))->CR1 &= ~(((0x1U << (8U))) | (0x00 << (24U)));             
+N    ADC3->CR2 &= ~(ADC_CR2_CONT | ADC_CR2_ALIGN | ADC_CR2_SWSTART);         // right aligment, single conversion mode, reset state
+X    ((ADC_TypeDef *) ((0x40000000U + 0x00010000U) + 0x2200U))->CR2 &= ~((0x1U << (1U)) | (0x1U << (11U)) | (0x1U << (30U)));         
+N    ADC3->SQR3 &= ~(ADC_SQR3_SQ1_Msk);                                      // clear first conversion
+X    ((ADC_TypeDef *) ((0x40000000U + 0x00010000U) + 0x2200U))->SQR3 &= ~((0x1FU << (0U)));                                      
+N    ADC3->SQR3 |= 0x08;                                                     // conversion at 8th channel
+X    ((ADC_TypeDef *) ((0x40000000U + 0x00010000U) + 0x2200U))->SQR3 |= 0x08;                                                     
+N    ADC3->SQR1 &= ~(ADC_SQR1_L_Msk);                                        // 1 conversion
+X    ((ADC_TypeDef *) ((0x40000000U + 0x00010000U) + 0x2200U))->SQR1 &= ~((0xFU << (20U)));                                        
+N    ADC3->SMPR2 &= ~(ADC_SMPR2_SMP0_Msk);                                   // clear sample time (cycles)
+X    ((ADC_TypeDef *) ((0x40000000U + 0x00010000U) + 0x2200U))->SMPR2 &= ~((0x7U << (0U)));                                   
+N    ADC3->SMPR2 |= 0x03 << ADC_SMPR2_SMP0_Pos;                              // set sample time of SMP0 to 56 cycles
+X    ((ADC_TypeDef *) ((0x40000000U + 0x00010000U) + 0x2200U))->SMPR2 |= 0x03 << (0U);                              
+N    ADC3->CR2 |= ADC_CR2_ADON;
+X    ((ADC_TypeDef *) ((0x40000000U + 0x00010000U) + 0x2200U))->CR2 |= (0x1U << (0U));
+N    return;
+W "src\peripherals.c" 81 2 last line of file ends without a newline
 N}

@@ -21825,13 +21825,13 @@ N    bool was_pressed;
 X    _Bool was_pressed;
 N    bool is_pressed;
 X    _Bool is_pressed;
-N    uint16_t has_been_held_for;
+N    volatile uint16_t has_been_held_for;
 N    GPIO_Config* gpio_config;
 N} FanSwitch;
 N
 Ntypedef struct Thermometer {
-N    uint16_t adc_val;
-N    uint16_t celcius;
+N    volatile uint16_t adc_val;
+N    volatile float celcius;
 N    GPIO_Config* gpio_config;
 N} Thermometer;
 N
@@ -21869,9 +21869,6 @@ N        && fan_switch->has_been_held_for >= 500) {
 N        fan_switch->was_toggled = true;
 X        fan_switch->was_toggled = 1;
 N        fan_switch->has_been_held_for = 0;
-N    } else {
-N        fan_switch->was_toggled = false;
-X        fan_switch->was_toggled = 0;
 N    }
 N// 3. Update the last state
 N    fan_switch->was_pressed = fan_switch->is_pressed;

@@ -21812,7 +21812,7 @@ N    bool was_pressed;
 X    _Bool was_pressed;
 N    bool is_pressed;
 X    _Bool is_pressed;
-N    uint16_t has_been_held_for;
+N    volatile uint16_t has_been_held_for;
 N    GPIO_Config* gpio_config;
 N} LightSwitch;
 N
@@ -21855,9 +21855,6 @@ N        && light_switch->has_been_held_for >= 500) {
 N        light_switch->was_toggled = true;
 X        light_switch->was_toggled = 1;
 N        light_switch->has_been_held_for = 0;
-N    } else {
-N        light_switch->was_toggled = false;
-X        light_switch->was_toggled = 0;
 N    }
 N// 3. Update the last state
 N    light_switch->was_pressed = light_switch->is_pressed;
@@ -21877,5 +21874,5 @@ N    gpio_setGPIO(light->gpio_config->port, light->gpio_config->pin);
 N    light->is_on = false;
 X    light->is_on = 0;
 N    return;
-W "src\lightSystem.c" 45 2 last line of file ends without a newline
+W "src\lightSystem.c" 43 2 last line of file ends without a newline
 N}

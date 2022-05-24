@@ -14,7 +14,7 @@ typedef struct LightSwitch {
     bool was_toggled; //if was_pressed and has_been_held_for > 500ms, then LightSwitch was_toggled.
     bool was_pressed;
     bool is_pressed;
-    uint16_t has_been_held_for;
+    volatile uint16_t has_been_held_for;
     GPIO_Config* gpio_config;
 } LightSwitch;
 

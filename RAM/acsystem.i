@@ -7890,13 +7890,13 @@ typedef struct FanSwitch {
     _Bool was_toggled; 
     _Bool was_pressed;
     _Bool is_pressed;
-    uint16_t has_been_held_for;
+    volatile uint16_t has_been_held_for;
     GPIO_Config* gpio_config;
 } FanSwitch;
 
 typedef struct Thermometer {
-    uint16_t adc_val;
-    uint16_t celcius;
+    volatile uint16_t adc_val;
+    volatile float celcius;
     GPIO_Config* gpio_config;
 } Thermometer;
 
@@ -7931,8 +7931,6 @@ void updateFanSwitch(FanSwitch* fan_switch) {
         && fan_switch->has_been_held_for >= 500) {
         fan_switch->was_toggled = 1;
         fan_switch->has_been_held_for = 0;
-    } else {
-        fan_switch->was_toggled = 0;
     }
 
     fan_switch->was_pressed = fan_switch->is_pressed;

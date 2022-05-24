@@ -23858,13 +23858,13 @@ N    bool was_pressed;
 X    _Bool was_pressed;
 N    bool is_pressed;
 X    _Bool is_pressed;
-N    uint16_t has_been_held_for;
+N    volatile uint16_t has_been_held_for;
 N    GPIO_Config* gpio_config;
 N} FanSwitch;
 N
 Ntypedef struct Thermometer {
-N    uint16_t adc_val;
-N    uint16_t celcius;
+N    volatile uint16_t adc_val;
+N    volatile float celcius;
 N    GPIO_Config* gpio_config;
 N} Thermometer;
 N
@@ -23897,7 +23897,7 @@ N    bool was_pressed;
 X    _Bool was_pressed;
 N    bool is_pressed;
 X    _Bool is_pressed;
-N    uint16_t has_been_held_for;
+N    volatile uint16_t has_been_held_for;
 N    GPIO_Config* gpio_config;
 N} LightSwitch;
 N
@@ -24077,8 +24077,8 @@ X    .is_running = 1,
 N    .time_in_ms = 1000,
 N    .in_one_pulse_mode = false,
 X    .in_one_pulse_mode = 0,
-N    .clock_speed = AHB1_ClkSpeed,
-X    .clock_speed = 168000000,
+N    .clock_speed = APB1_ClkSpeed,
+X    .clock_speed = 42000000,
 N    .timer_component = TIM6};
 X    .timer_component = ((TIM_TypeDef *) (0x40000000U + 0x1000U))};
 NTimer rising_edge_timer = {
@@ -24088,8 +24088,8 @@ N    .time_in_ms = RISING_EDGE_TIMER_PERIOD,
 X    .time_in_ms = 50,
 N    .in_one_pulse_mode = false,
 X    .in_one_pulse_mode = 0,
-N    .clock_speed = AHB1_ClkSpeed,
-X    .clock_speed = 168000000,
+N    .clock_speed = APB1_ClkSpeed,
+X    .clock_speed = 42000000,
 N    .timer_component = TIM7};
 X    .timer_component = ((TIM_TypeDef *) (0x40000000U + 0x1400U))};
 NTimer uart_priority_timer = {
@@ -24107,7 +24107,8 @@ N/****************** HOME MANAGEMENT SYSTEM COMPONENTS ******************/
 N// Unfortunately we don't have constructors for these.
 N// Leave uninitialised until we've determined member data.
 NLight light = {
-N    
+N    .is_on = false,
+X    .is_on = 0,
 N    .gpio_config = &light_config};
 NLightSwitch light_switch = {
 N    .was_toggled = false,
@@ -24119,17 +24120,21 @@ X    .is_pressed = 0,
 N    .has_been_held_for = 0,
 N    .gpio_config = &light_switch_config};
 NLightSensor light_sensor = {
-N
+N    .is_active = false,
+X    .is_active = 0,
 N    .gpio_config = &light_sensor_config};
 N
 NHeater heater = {
-N
+N    .is_on = false,
+X    .is_on = 0,
 N    .gpio_config = &heater_config};
 NCooler cooler = {
-N
+N    .is_on = false,
+X    .is_on = 0,
 N    .gpio_config = &cooler_config};
 NFan fan = {
-N
+N    .is_on = false,
+X    .is_on = 0,
 N    .gpio_config = &fan_config};
 NFanSwitch fan_switch = {
 N    .was_toggled = false,
@@ -24141,8 +24146,10 @@ X    .is_pressed = 0,
 N    .has_been_held_for = 0,
 N    .gpio_config = &fan_switch_config};
 NThermometer thermometer = {
-N
+N    .adc_val = 0,
+N    .celcius = 0.0,
 N    .gpio_config = &thermometer_config};
+N
 Nint main(void)
 N{
 N  /****************** ENABLE CLOCKS FOR GPIO ******************/
@@ -24217,6 +24224,8 @@ N        turnOffLight(&light);
 N      } else {
 N        turnOnLight(&light);
 N      }
+N      light_switch.was_toggled = false;
+X      light_switch.was_toggled = 0;
 N    }
 N    // Same as above, except it's a fan.
 N    updateFanSwitch(&fan_switch);
@@ -24226,6 +24235,8 @@ N        turnOffFan(&fan);
 N      } else {
 N        turnOnFan(&fan);
 N      }
+N      fan_switch.was_toggled = false;
+X      fan_switch.was_toggled = 0;
 N    }
 N  }
 N}

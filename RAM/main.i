@@ -8019,13 +8019,13 @@ typedef struct FanSwitch {
     _Bool was_toggled; 
     _Bool was_pressed;
     _Bool is_pressed;
-    uint16_t has_been_held_for;
+    volatile uint16_t has_been_held_for;
     GPIO_Config* gpio_config;
 } FanSwitch;
 
 typedef struct Thermometer {
-    uint16_t adc_val;
-    uint16_t celcius;
+    volatile uint16_t adc_val;
+    volatile float celcius;
     GPIO_Config* gpio_config;
 } Thermometer;
 
@@ -8053,7 +8053,7 @@ typedef struct LightSwitch {
     _Bool was_toggled; 
     _Bool was_pressed;
     _Bool is_pressed;
-    uint16_t has_been_held_for;
+    volatile uint16_t has_been_held_for;
     GPIO_Config* gpio_config;
 } LightSwitch;
 
@@ -8210,13 +8210,13 @@ Timer monitoring_timer = {
     .is_running = 1,
     .time_in_ms = 1000,
     .in_one_pulse_mode = 0,
-    .clock_speed = 168000000,
+    .clock_speed = 42000000,
     .timer_component = ((TIM_TypeDef *) (0x40000000U + 0x1000U))};
 Timer rising_edge_timer = {
     .is_running = 1,
     .time_in_ms = 50,
     .in_one_pulse_mode = 0,
-    .clock_speed = 168000000,
+    .clock_speed = 42000000,
     .timer_component = ((TIM_TypeDef *) (0x40000000U + 0x1400U))};
 Timer uart_priority_timer = {
     .is_running = 0,
@@ -8229,7 +8229,7 @@ Timer uart_priority_timer = {
 
 
 Light light = {
-    
+    .is_on = 0,
     .gpio_config = &light_config};
 LightSwitch light_switch = {
     .was_toggled = 0,
@@ -8238,17 +8238,17 @@ LightSwitch light_switch = {
     .has_been_held_for = 0,
     .gpio_config = &light_switch_config};
 LightSensor light_sensor = {
-
+    .is_active = 0,
     .gpio_config = &light_sensor_config};
 
 Heater heater = {
-
+    .is_on = 0,
     .gpio_config = &heater_config};
 Cooler cooler = {
-
+    .is_on = 0,
     .gpio_config = &cooler_config};
 Fan fan = {
-
+    .is_on = 0,
     .gpio_config = &fan_config};
 FanSwitch fan_switch = {
     .was_toggled = 0,
@@ -8257,8 +8257,10 @@ FanSwitch fan_switch = {
     .has_been_held_for = 0,
     .gpio_config = &fan_switch_config};
 Thermometer thermometer = {
-
+    .adc_val = 0,
+    .celcius = 0.0,
     .gpio_config = &thermometer_config};
+
 int main(void)
 {
    
@@ -8324,6 +8326,7 @@ int main(void)
       } else {
         turnOnLight(&light);
       }
+      light_switch.was_toggled = 0;
     }
     
     updateFanSwitch(&fan_switch);
@@ -8333,6 +8336,7 @@ int main(void)
       } else {
         turnOnFan(&fan);
       }
+      fan_switch.was_toggled = 0;
     }
   }
 }

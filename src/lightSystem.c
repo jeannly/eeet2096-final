@@ -23,8 +23,6 @@ void updateLightSwitch(LightSwitch* light_switch) {
         && light_switch->has_been_held_for >= 500) {
         light_switch->was_toggled = true;
         light_switch->has_been_held_for = 0;
-    } else {
-        light_switch->was_toggled = false;
     }
 // 3. Update the last state
     light_switch->was_pressed = light_switch->is_pressed;

@@ -113,13 +113,13 @@ Timer monitoring_timer = {
     .is_running = true,
     .time_in_ms = 1000,
     .in_one_pulse_mode = false,
-    .clock_speed = AHB1_ClkSpeed,
+    .clock_speed = APB1_ClkSpeed,
     .timer_component = TIM6};
 Timer rising_edge_timer = {
     .is_running = true,
     .time_in_ms = RISING_EDGE_TIMER_PERIOD,
     .in_one_pulse_mode = false,
-    .clock_speed = AHB1_ClkSpeed,
+    .clock_speed = APB1_ClkSpeed,
     .timer_component = TIM7};
 Timer uart_priority_timer = {
     .is_running = false,
@@ -132,7 +132,7 @@ Timer uart_priority_timer = {
 // Unfortunately we don't have constructors for these.
 // Leave uninitialised until we've determined member data.
 Light light = {
-    
+    .is_on = false,
     .gpio_config = &light_config};
 LightSwitch light_switch = {
     .was_toggled = false,
@@ -141,17 +141,17 @@ LightSwitch light_switch = {
     .has_been_held_for = 0,
     .gpio_config = &light_switch_config};
 LightSensor light_sensor = {
-
+    .is_active = false,
     .gpio_config = &light_sensor_config};
 
 Heater heater = {
-
+    .is_on = false,
     .gpio_config = &heater_config};
 Cooler cooler = {
-
+    .is_on = false,
     .gpio_config = &cooler_config};
 Fan fan = {
-
+    .is_on = false,
     .gpio_config = &fan_config};
 FanSwitch fan_switch = {
     .was_toggled = false,
@@ -160,8 +160,10 @@ FanSwitch fan_switch = {
     .has_been_held_for = 0,
     .gpio_config = &fan_switch_config};
 Thermometer thermometer = {
-
+    .adc_val = 0,
+    .celcius = 0.0,
     .gpio_config = &thermometer_config};
+
 int main(void)
 {
   /****************** ENABLE CLOCKS FOR GPIO ******************/
@@ -207,7 +209,7 @@ int main(void)
   initTimer(&monitoring_timer);
   initTimer(&rising_edge_timer);
   initTimer(&uart_priority_timer);
-  // ADC?
+  
 	
 	
   /***************************************************/
@@ -227,6 +229,7 @@ int main(void)
       } else {
         turnOnLight(&light);
       }
+      light_switch.was_toggled = false;
     }
     // Same as above, except it's a fan.
     updateFanSwitch(&fan_switch);
@@ -236,6 +239,7 @@ int main(void)
       } else {
         turnOnFan(&fan);
       }
+      fan_switch.was_toggled = false;
     }
   }
 }
@@ -263,7 +267,6 @@ void TIM7_IRQHandler(void) {
   // Clear update interrupt
   TIM7->SR &= ~(TIM_SR_UIF);
 
-  //TODO: Verify the logic for this. Is 'held for' was_pressed && is_pressed, or just is_pressed?
   if (fan_switch.is_pressed) {
     fan_switch.has_been_held_for += RISING_EDGE_TIMER_PERIOD;
   }

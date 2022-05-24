@@ -3,7 +3,7 @@
 <title>Static Call Graph - [.\RAM\STM32F439_Template.axf]</title></head>
 <body><HR>
 <H1>Static Call Graph for image .\RAM\STM32F439_Template.axf</H1><HR>
-<BR><P>#&#060CALLGRAPH&#062# ARM Linker, 5060960: Last Updated: Tue May 24 13:56:02 2022
+<BR><P>#&#060CALLGRAPH&#062# ARM Linker, 5060960: Last Updated: Tue May 24 14:45:01 2022
 <BR><P>
 <H3>Maximum Stack Usage =         32 bytes + Unknown(Cycles, Untraceable Function Pointers)</H3><H3>
 Call chain for Maximum Stack Depth:</H3>
@@ -207,7 +207,7 @@ Global Symbols
 <LI><a href="#[6e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;updateFanSwitch
 </UL>
 
-<P><STRONG><a name="[6e]"></a>updateFanSwitch</STRONG> (Thumb, 64 bytes, Stack size 16 bytes, acsystem.o(.text))
+<P><STRONG><a name="[6e]"></a>updateFanSwitch</STRONG> (Thumb, 58 bytes, Stack size 16 bytes, acsystem.o(.text))
 <BR><BR>[Stack]<UL><LI>Max Depth = 16<LI>Call Chain = updateFanSwitch
 </UL>
 <BR>[Calls]<UL><LI><a href="#[6f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;gpio_getPinValue
@@ -231,7 +231,7 @@ Global Symbols
 <BR>[Called By]<UL><LI><a href="#[65]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;main
 </UL>
 
-<P><STRONG><a name="[73]"></a>updateLightSwitch</STRONG> (Thumb, 64 bytes, Stack size 16 bytes, lightsystem.o(.text))
+<P><STRONG><a name="[73]"></a>updateLightSwitch</STRONG> (Thumb, 58 bytes, Stack size 16 bytes, lightsystem.o(.text))
 <BR><BR>[Stack]<UL><LI>Max Depth = 16<LI>Call Chain = updateLightSwitch
 </UL>
 <BR>[Calls]<UL><LI><a href="#[6f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;gpio_getPinValue
@@ -255,7 +255,7 @@ Global Symbols
 <BR>[Called By]<UL><LI><a href="#[65]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;main
 </UL>
 
-<P><STRONG><a name="[65]"></a>main</STRONG> (Thumb, 338 bytes, Stack size 0 bytes, main.o(.text))
+<P><STRONG><a name="[65]"></a>main</STRONG> (Thumb, 350 bytes, Stack size 0 bytes, main.o(.text))
 <BR><BR>[Stack]<UL><LI>Max Depth = 24<LI>Call Chain = main &rArr; boardSupport_init &rArr; boardSupport_initGPIO
 </UL>
 <BR>[Calls]<UL><LI><a href="#[77]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;initUART

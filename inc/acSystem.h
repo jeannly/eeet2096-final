@@ -25,13 +25,13 @@ typedef struct FanSwitch {
     bool was_toggled; //if was_pressed and has_been_held_for >= 500ms, then FanSwitch was_toggled.
     bool was_pressed;
     bool is_pressed;
-    uint16_t has_been_held_for;
+    volatile uint16_t has_been_held_for;
     GPIO_Config* gpio_config;
 } FanSwitch;
 
 typedef struct Thermometer {
-    uint16_t adc_val;
-    uint16_t celcius;
+    volatile uint16_t adc_val;
+    volatile float celcius;
     GPIO_Config* gpio_config;
 } Thermometer;
 

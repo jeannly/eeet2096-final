@@ -7879,7 +7879,7 @@ typedef struct LightSwitch {
     _Bool was_toggled; 
     _Bool was_pressed;
     _Bool is_pressed;
-    uint16_t has_been_held_for;
+    volatile uint16_t has_been_held_for;
     GPIO_Config* gpio_config;
 } LightSwitch;
 
@@ -7916,8 +7916,6 @@ void updateLightSwitch(LightSwitch* light_switch) {
         && light_switch->has_been_held_for >= 500) {
         light_switch->was_toggled = 1;
         light_switch->has_been_held_for = 0;
-    } else {
-        light_switch->was_toggled = 0;
     }
 
     light_switch->was_pressed = light_switch->is_pressed;

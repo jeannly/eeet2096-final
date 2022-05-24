@@ -21,13 +21,20 @@ Target DLL:      Segger\JL2CM3.dll V2.99.40.0
 Dialog DLL:      TCM.DLL V1.53.0.0
  
 <h2>Project:</h2>
-C:\Users\Jean\OneDrive - RMIT University\UNI\2022\Embedded\Projects\Final Project Attempt 2\STM32F439_Template.uvprojx
+C:\Users\Jean\OneDrive - RMIT University\UNI\2022\Embedded\Projects\Final Project\STM32F439_Template.uvprojx
 Project File Date:  05/24/2022
 
 <h2>Output:</h2>
 *** Using Compiler 'V5.06 update 7 (build 960)', folder: 'C:\Keil_v5\ARM\ARMCC\Bin'
 Build target 'STM32F4 RAM'
+creating preprocessor file for lightSystem.c...
 creating preprocessor file for main.c...
+compiling lightSystem.c...
+.\inc\lightSystem.h(29): warning:  #1-D: last line of file ends without a newline
+  #endif
+src\lightSystem.c(43): warning:  #1-D: last line of file ends without a newline
+  }
+src\lightSystem.c: 2 warnings, 0 errors
 compiling main.c...
 .\inc\lightSystem.h(29): warning:  #1-D: last line of file ends without a newline
   #endif
@@ -35,8 +42,8 @@ compiling main.c...
   #endif //PERIPHERALS_H
 src\main.c: 2 warnings, 0 errors
 linking...
-Program Size: Code=2594 RO-data=486 RW-data=272 ZI-data=25600  
-".\RAM\STM32F439_Template.axf" - 0 Error(s), 2 Warning(s).
+Program Size: Code=2594 RO-data=486 RW-data=276 ZI-data=25604  
+".\RAM\STM32F439_Template.axf" - 0 Error(s), 4 Warning(s).
 
 <h2>Software Packages used:</h2>
 
@@ -62,12 +69,12 @@ Package Vendor: Keil
    * Component: ARM::CMSIS:CORE:5.5.0
 
    * Component: Keil::Device:Startup:2.6.3
-      Source file:   MDK\Device\Source\ARM\STM32F4xx_OTP.s
-      Include file:  Drivers\CMSIS\Device\ST\STM32F4xx\Include\stm32f4xx.h
-      Source file:   MDK\Device\Source\ARM\STM32F42xxx_43xxx_OPT.s
       Source file:   Drivers\CMSIS\Device\ST\STM32F4xx\Source\Templates\arm\startup_stm32f439xx.s
+      Source file:   MDK\Device\Source\ARM\STM32F42xxx_43xxx_OPT.s
+      Include file:  Drivers\CMSIS\Device\ST\STM32F4xx\Include\stm32f4xx.h
+      Source file:   MDK\Device\Source\ARM\STM32F4xx_OTP.s
       Source file:   Drivers\CMSIS\Device\ST\STM32F4xx\Source\Templates\system_stm32f4xx.c
-Build Time Elapsed:  00:00:03
+Build Time Elapsed:  00:00:05
 </pre>
 </body>
 </html>

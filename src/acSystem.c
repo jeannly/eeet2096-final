@@ -23,8 +23,6 @@ void updateFanSwitch(FanSwitch* fan_switch) {
         && fan_switch->has_been_held_for >= 500) {
         fan_switch->was_toggled = true;
         fan_switch->has_been_held_for = 0;
-    } else {
-        fan_switch->was_toggled = false;
     }
 // 3. Update the last state
     fan_switch->was_pressed = fan_switch->is_pressed;

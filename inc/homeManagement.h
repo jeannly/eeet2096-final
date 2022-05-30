@@ -41,13 +41,42 @@ typedef struct Thermometer {
     GPIO_Config* gpio_config;
 } Thermometer;
 
-void updateFanSwitch(FanSwitch*);
-void setOverride(FanSwitch*);
-void updateThermometer(Thermometer*);
-void updateLightSwitch(LightSwitch*);
-void updateLightSensor(LightSensor*);
+
+
 void toggle(Component*);
 void turnOn(Component*);
 void turnOff(Component*);
+
+/****************** LIGHT SYSTEM FUNCTIONS *****************/
+
+/* updateLightSwitch:
+    - If light switch is disabled, does nothing
+    - Otherwise, reads the light switch GPIO, and updates its variables (is_pressed, was_pressed)
+    - Determines if the light switch was toggled based on 500ms rising edge logic 
+*/
+void updateLightSwitch(LightSwitch*);
+
+/* updateLightSensor:
+    - Reads the light sensor GPIO and updates is variable (is_active)
+*/
+void updateLightSensor(LightSensor*);
+
+/****************** AC SYSTEM FUNCTIONS *****************/
+/* updateFanSwitch:
+    - Reads the fan switch GPIO, and updates its variables (is_pressed, was_pressed)
+    - Determines if the fan switch was toggled based on 500ms rising edge logic 
+*/
+void updateFanSwitch(FanSwitch*);
+/* activate/deactivateOverride:
+    - Manages the 15s override for fan switch, in conjunction with TIM7 handler.
+*/
+void activateOverride(FanSwitch*);
+void deactivateOverride(FanSwitch*);
+
+/* updateThermometer:
+    - Reads "temperature" reading from ADC3, update variables (adc_val, celcius)
+*/
+void updateThermometer(Thermometer*);
+
 
 #endif //HOMEMANAGEMENT_H
